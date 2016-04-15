@@ -136,7 +136,7 @@ shinyUI(fluidPage(
       )), br(),br(),
        
       h5('About this project:'),
-      p("This project was carried out by the", a("Monsoro Burq lab (Curie Institute)", href="http://umr3347.curie.fr/fr/equipes-de-recherche/ah-monsoro-burq",target="_blank"), "and the", a("Harland lab (UC Berkeley)",href="https://mcb.berkeley.edu/labs/harland/",target="_blank")),
+      p("This project was carried out by the", a("Monsoro Burq (Curie Institute)", href="http://umr3347.curie.fr/fr/equipes-de-recherche/ah-monsoro-burq",target="_blank"), ",", a("Harland  (UC Berkeley/HHMI)",href="https://mcb.berkeley.edu/labs/harland/",target="_blank"),', and',a("Eisen  (UC Berkeley/HHMI)",href="http://eisenlab.org/",target="_blank"),'labs.'),
       h6("REF: Manuscript of preparation. "),
       h6("* For more information about in situ expression patterns displayed in this page, go to the links from Xenbase.org"),
       br(),br(),br(),
@@ -157,7 +157,7 @@ shinyUI(fluidPage(
                  tabsetPanel(
                    
                              tabPanel("1a. NMF prediction",
-                                      h3(strong("1."), "Compare expression patterns between two genes"), 
+                                      h3(strong("1.a"), "Compare expression patterns between two genes"), 
                                       h5(htmlOutput("Gene_link1")), uiOutput("xenPlot1.ui"),
                                       h5(htmlOutput("Gene_link2")), uiOutput("xenPlot2.ui"),br(),br()),
                              tabPanel("1.b Adjacency table",
