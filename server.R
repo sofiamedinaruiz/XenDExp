@@ -2,20 +2,21 @@ library(shiny)
 source("helpers.R")
 ##One day I would like to represent the network this way: http://bl.ocks.org/d3noob/8043434
 
-###### Documentation XenDExp v.1.2
-# README.txt for info on how to run the XenDExp app. 
-# Respository: gitlab/....
+###### Documentation Ectomap v.1.0
+# README.txt for info on how to run the EctoMAP app. 
+# Respository: https://github.com/sofiamedinaruiz/EctoMAP/
 # To run the app:
 # You require to install the libraries found in helper.R
-# Updated: Apr 14th, 2016
+# Updated: Dec 15th, 2016
 # To run:
-#      runApp('The-Directory-for/XenDExp')
-#setwd('/Users/sofiamedina/Documents/Harland\ Lab/GeneExpression2016/XenDExp')
+#      runApp('The-Directory-for/EctoMAP')
+#setwd('/Users/sofiamedina/Documents/Harland\ Lab/GeneExpression2016/EctoMAP\ copy')
 
-
+load(file = "load/ALLdata.rda")  ##added new
+WGCNAgene_module <-as.data.frame(fread("WGCNA/WGCNAgroups_names_dynModhyb_SP22-bicor-ds4-signed.csv", header=T, sep="\t", stringsAsFactors=FALSE))
 
 shinyServer(function(input, output) {
-
+  
   output$xenPlot1.ui <- renderUI({ 
     if (input$Show_expression_pattern_coexp ==TRUE){
       plotOutput("xenPlot1", width= "100%", height="300px")
@@ -34,18 +35,19 @@ shinyServer(function(input, output) {
       short_gene <- findhugo(input$gene)
       website <- get_website(short_gene)
       GENEID_description<-get_gene_description(short_gene)
-      
       if(length(website)==0){  
         tags$div(class = "header", checked =NA,
-                 br(),
-                 tags$h4(strong("Gene 1:        "),em(input$gene)), 
-                 tags$p(strong("Hugo name:   "), em(short_gene)))
+               #  br(),
+                 tags$p("The diagrams below display the relative ectodermal expression of a given transcript."),br(),
+                 tags$h5(strong("1st transcript: "),em(input$gene)), 
+                 tags$p(strong("Gene name:   "), em(short_gene)))
       }else{
         tags$div(#class = "header", checked = NA,
-                 br(),
-                 tags$h4(strong("Gene 1:        "),em(input$gene)), 
-                 tags$a(href = paste0(website),  strong("Hugo name: ", em(short_gene)), target="_blank"), tags$p(""), 
-                 tags$a(href = paste0(website), GENEID_description, target="_blank"))
+                # br(),
+                 tags$p("The diagrams below display the relative ectodermal expression of a given transcript."),br(),
+                 tags$h5(strong("1st transcript: "),em(input$gene)), 
+                 tags$p(strong(em(short_gene)), "- ",GENEID_description),
+                 tags$a(href = paste0(website), "Link to Xenbase", target="_blank") )
       }
     }
   })
@@ -55,18 +57,15 @@ shinyServer(function(input, output) {
       short_gene <- findhugo(input$gene2)
       website <- get_website(short_gene)
       GENEID_description<-get_gene_description(short_gene)
-      
       if(length(website)==0){  
         tags$div(class = "header", checked =NA,
-                tags$h4(strong("1.a."),  em("In situ"), "prediction obtained by NMF matrix deconvolution"),
-                tags$p(strong("Gene 2:        "),em(input$gene2)),
-                tags$p(strong("Hugo name:   "), short_gene))
+                tags$h5(strong("2nd transcript: "),em(input$gene2)),
+                tags$p(strong("Gene name:   "), short_gene))
       }else{
         tags$div(class = "header", checked = NA,
-                #tags$h4(strong("1.a."), em("In situ"), "prediction obtained by NMF matrix deconvolution"),
-                tags$h4(strong("Gene 2:        "),em(input$gene2)),
-                tags$a(href = paste0(website),  strong("Hugo name: ", em(short_gene)), target="_blank"), tags$p(""), 
-                tags$a(href = paste0(website), GENEID_description, target="_blank"))
+                tags$h5(strong("2nd transcript: "),em(input$gene2)),
+                tags$p(strong(em(short_gene)), "- ",GENEID_description),
+                tags$a(href = paste0(website), "Link to Xenbase", target="_blank") )
       }
     }
   })
@@ -74,8 +73,18 @@ shinyServer(function(input, output) {
   output$Text_output_coexp.ui <- renderUI({
     if (input$Show_coexp == TRUE){
       tags$div(class = "header", checked =NA,
-               tags$h4(strong("1.b."), "Genes that share spatiotemporal expression with respect to ", input$gene),
-               tags$p("Adjacency matrix was obtained using the WGCNA package (soft power = 23):")
+               tags$p("The following table displays the 50 transcripts that show close expression profile similarities with the first trascript from Section 2:", strong(em(input$gene)),". This list was obtained by retrieving the top-50 most adjacent transcripts from the unsigned adjacency matrix (2nd column). The Pearson's correlation and associated p-value (3rd and 4th column) result from the pairwise comparisons between two genes across all 79 spatio/temporal datasets. The last column displays the assigned module number, which can range from 0-140"),
+               
+               #tags$p("Input transcript (from section 2.a): ", em(input$gene)),
+               br()
+      )
+    }
+    if (input$Show_coexp == FALSE){
+      tags$div(class = "header", checked =NA,
+               tags$p("If desired, one can obtain a table that displays the 50 transcripts that show close expression profile similarities with the first trascript input on Section 2."),
+               
+               #tags$p("Input transcript (from section 2.a): ", em(input$gene)),
+               br()
       )
     }
   })
@@ -87,6 +96,7 @@ shinyServer(function(input, output) {
     }
   }, options = list(lengthMenu = c(5, 10, 20, 30, 40, 50), pageLength = 10, searching = FALSE))
   
+###If you want want to show the co-expression list for Transcript #2 deselect this section and adjust parameters as needed.
 ##  output$Text_output_coexp2.ui <- renderUI({
 ##    if (input$Show_coexp == TRUE){
 ##      tags$div(class = "header", checked =NA,
@@ -104,14 +114,16 @@ shinyServer(function(input, output) {
 ##  }, options = list(lengthMenu = c(5, 10, 20, 30, 40, 50), pageLength = 5, searching = FALSE))
   
   output$timeSeries.ui <-renderUI({
-    if ((input$Use_prev == TRUE) | (length(input$genes_for_timeserie)>0)){  
-      plotOutput("timeSeries", width= "90%", height= "500px")
-    }
+    #Show_time_series=TRUE
+    #if (input$Show_time_series == TRUE){
+      selected_gene<-c(input$genes_for_timeserie)
+      plotOutput("timeSeries", width= "90%", height= "450px")
+    #}
   })
   
   output$tree.ui <-renderUI({
     if(input$Draw_tree_option == TRUE){
-      plotOutput("tree", height="1000px", width= "auto")
+      plotOutput("tree", width="95%", height= input$px4/2)
     }
   })
   
@@ -120,7 +132,7 @@ shinyServer(function(input, output) {
       forceNetworkOutput("Network", height="1500", width="95%")
     }
   })
-  
+ 
   output$InSitus12 <- renderUI({ 
     if ((input$In_situ_option == TRUE) & (input$Show_expression_pattern_coexp ==TRUE)){
       short_gene <- findhugo(input$gene)
@@ -161,6 +173,8 @@ shinyServer(function(input, output) {
   #First expression pattern
   output$xenPlot1 <- renderPlot({
     if (input$Show_expression_pattern_coexp ==TRUE){
+      
+      
       par(mfrow=c(1,2))
       
       if(!is.na(match(input$gene, genenames.st12)))
@@ -190,47 +204,33 @@ shinyServer(function(input, output) {
 
   #1 plot call
   output$timeSeries <-renderPlot({
-    selected_gene<-c()
-    if ( (input$Use_prev == FALSE) & (length(input$genes_for_timeserie)>0)){
-      selected_gene <- c(input$genes_for_timeserie) 
-      time.series.plot(selected_gene,input$Nomalization_gene,findhugo(input$Nomalization_gene))
-    }else{
-      if ( (input$Use_prev == TRUE)){
-        short_gene <- findhugo(input$gene)
-        short_gene2 <- findhugo(input$gene2)
-        if (length(input$genes_for_timeserie)==0){ 
-          selected_gene<- unique(c(short_gene,short_gene2))
-          time.series.plot(selected_gene,input$Nomalization_gene,findhugo(input$Nomalization_gene))
-        }else{
-          selected_gene<- unique(c(short_gene,short_gene2,input$genes_for_timeserie))
-          time.series.plot(selected_gene,input$Nomalization_gene,findhugo(input$Nomalization_gene))
-        }
-      }
-    }
+    
+    time.series.plot(c(input$genes_for_timeserie),input$Nomalization_gene,findhugo(input$Nomalization_gene))
   })
   
   output$Absolute2.ui<- renderUI({
-    if (input$Expression_levels_option == TRUE){
-      if ((input$Use_prev2 == TRUE ) | (length(input$gene_list_for_expression) > 1)) {
+    if (input$Expression_levels_option == TRUE) {
+      if ((input$Use_prev2 == TRUE) | (length(input$gene_list_for_expression) > 1) | (input$Use_prev3 == TRUE)){
         plotOutput("Absolute2plot", width= "90%", height= input$px)
-      } 
+      }
     }
-  })
+   })
 
   output$Absolute2plot <-renderPlot({
     selected_stage<- input$Select_stage11 
     selected_genotype<- "WT"
-    selected_gene<-c()
-    if(input$Use_prev2 == TRUE){
-      short_gene <- findhugo(input$gene)
-      short_gene2 <- findhugo(input$gene2)
-      selected_gene<-append(selected_gene,c(short_gene,short_gene2,input$genes_for_timeserie))
+    selected_gene<-extend.gene.list_samples_from_hugo(c(input$gene_list_for_expression))
+    if (input$Use_prev2 == TRUE){
+      selected_gene<-append(selected_gene,c(input$genes_for_timeserie))
+    }        
+    if (input$Use_prev3 == TRUE){
+      short_gene <- input$gene
+      short_gene2 <- input$gene2
+      selected_gene<-append(selected_gene,c(short_gene,short_gene2))
     }
-    if (length(input$gene_list_for_expression>0)){
-      selected_gene<-unique(c(append(selected_gene,input$gene_list_for_expression)))
-    }
+    selected_gene<-unique(sort(c(selected_gene)))
     if  (length(selected_gene)>0){
-      absolute2.plot(unique(sort(selected_gene)),selected_stage,selected_genotype)
+      absolute2.plot(selected_gene,selected_stage,selected_genotype)
     }else{
       paste('Need to provide a gene name.')
     }
@@ -238,16 +238,20 @@ shinyServer(function(input, output) {
   
   output$heatplot.ui <-renderUI({
     if(input$Make_correlation_option == TRUE){
-      if((length(input$gene_list_for_expression) > 1) | (input$Use_prev2 == TRUE )) {
-        height= length( extend.gene.list(input$gene_list_for_expression))*23
-        plotOutput("heatplot", width="95%", height= input$px2/2)
+      selected_gene<-c(input$gene_list_for_expression)
+      if((length(input$gene_list_for_expression) > 0) | (input$Use_prev2 == TRUE ) | (input$Use_prev3 == TRUE )) {
+        height= length(input$gene_list_for_expression)*50
+        plotOutput("heatplot", width="100%", height= input$px3)
       }
-    }else{}
+    }else{
+      paste ('not TRUE - something is not printing')
+    }
   })
   
   output$heatplot <- renderPlot({
     if( input$Make_correlation_option == TRUE){
-      selected_gene=c()
+      selected_gene<- c()
+      selected_gene<- c(input$gene_list_for_expression)
       Entry<-c()
         if (input$Landmark_genesNC){Entry<-append(Entry,NC_genes ) }
         if (input$Landmark_genesNB){ Entry<-append(Entry,NB_genes) }
@@ -255,12 +259,16 @@ shinyServer(function(input, output) {
         if (input$Landmark_genesAnterior){Entry<-append(Entry,Anterior_genes) }
         if (input$Landmark_genesNP){ Entry<-append(Entry,NP_genes) }
         if (input$Landmark_genesEpi){Entry<-append(Entry,Epidermis) }
-        if (input$Use_prev2 == TRUE){
-          short_gene <- findhugo(input$gene)
-          short_gene2 <- findhugo(input$gene2)
-          Entry<-append(Entry,c(short_gene,short_gene2))
-        }
-        selected_gene<- unique(append(Entry,c(input$gene_list_for_expression,input$genes_for_timeserie) ))
+        if (input$Landmark_genesPos){Entry<-append(Entry,Posterior) }
+      if (input$Use_prev2 == TRUE){
+        Entry<-append(Entry,reduce.gene.list_samples(c(input$genes_for_timeserie)))
+      }        
+      if (input$Use_prev3 == TRUE){
+        short_gene <- findhugo(input$gene)
+        short_gene2 <- findhugo(input$gene2)
+        Entry<-append(Entry,c(short_gene,short_gene2))
+      }
+        selected_gene<- unique(append(Entry,c(input$gene_list_for_expression,reduce.gene.list_samples(c(input$genes_for_timeserie)))))
         if (length(selected_gene)>1){
             heat.plot(unique(selected_gene), input$corr_type)
         }
@@ -269,50 +277,57 @@ shinyServer(function(input, output) {
   
   output$tree <- renderPlot({
     if(input$Draw_tree_option == TRUE){
-      if((length(input$gene_list_for_expression) > 1 ) | (input$Use_prev2 == TRUE)){
-        selected_gene<-c()
-        Entry<-c()
-          if (input$Landmark_genesNC ==TRUE){Entry<-append(Entry,NC_genes ) }
-          if (input$Landmark_genesNB== TRUE){ Entry<-append(Entry,NB_genes) }
-          if (input$Landmark_genesVentral== TRUE){ Entry<-append(Entry,Ventral_genes) }
-          if (input$Landmark_genesAnterior== TRUE){Entry<-append(Entry,Anterior_genes) }
-          if (input$Landmark_genesNP== TRUE){ Entry<-append(Entry,NP_genes) }
-          if (input$Landmark_genesEpi== TRUE){Entry<-append(Entry,Epidermis) }
-          if (input$Use_prev2 == TRUE){
-            short_gene <- findhugo(input$gene)
-            short_gene2 <- findhugo(input$gene2)
-            Entry<-append(Entry,c(short_gene,short_gene2))
-          }
-        selected_gene<-unique(append(selected_gene,c(Entry,input$gene_list_for_expression, Entry,input$genes_for_timeserie)))
-        if (length(selected_gene)>1){
+      selected_gene<- c()
+      selected_gene<- c(input$gene_list_for_expression)
+      Entry<-c()
+      if (input$Landmark_genesNC){Entry<-append(Entry,NC_genes ) }
+      if (input$Landmark_genesNB){ Entry<-append(Entry,NB_genes) }
+      if (input$Landmark_genesVentral){ Entry<-append(Entry,Ventral_genes) }
+      if (input$Landmark_genesAnterior){Entry<-append(Entry,Anterior_genes) }
+      if (input$Landmark_genesNP){ Entry<-append(Entry,NP_genes) }
+      if (input$Landmark_genesEpi){Entry<-append(Entry,Epidermis) }
+      if (input$Landmark_genesPos){Entry<-append(Entry,Posterior) }
+      if (input$Use_prev2 == TRUE){
+        Entry<-append(Entry,reduce.gene.list_samples(c(input$genes_for_timeserie)))
+      }        
+      if (input$Use_prev3 == TRUE){
+        short_gene <- findhugo(input$gene)
+        short_gene2 <- findhugo(input$gene2)
+        Entry<-append(Entry,c(short_gene,short_gene2))
+      }
+      selected_gene<- unique(append(Entry,c(input$gene_list_for_expression,reduce.gene.list_samples(c(input$genes_for_timeserie)) )))
+      if (length(selected_gene)>1){
           tree_plot(unique(selected_gene), input$corr_type)
         }
-      }
     }
   })
 
   output$Network <- renderForceNetwork({
     if(input$Draw_Network == TRUE){
-      if((length(input$gene_list_for_expression) > 1 ) | (input$Use_prev2 == TRUE)){
+      if((length(input$gene_list_for_expression) > 0 ) | (input$Use_prev2 == TRUE) | (input$Use_prev3 == TRUE)){
         selected_gene<-c()
         Entry<-c()
-        if (input$Landmark_genesNC ==TRUE){Entry<-append(Entry,NC_genes ) }
-        if (input$Landmark_genesNB== TRUE){ Entry<-append(Entry,NB_genes) }
-        if (input$Landmark_genesVentral== TRUE){ Entry<-append(Entry,Ventral_genes) }
-        if (input$Landmark_genesAnterior== TRUE){Entry<-append(Entry,Anterior_genes) }
-        if (input$Landmark_genesNP== TRUE){ Entry<-append(Entry,NP_genes) }
-        if (input$Landmark_genesEpi== TRUE){Entry<-append(Entry,Epidermis) }
+        if (input$Landmark_genesNC){Entry<-append(Entry,NC_genes ) }
+        if (input$Landmark_genesNB){ Entry<-append(Entry,NB_genes) }
+        if (input$Landmark_genesVentral){ Entry<-append(Entry,Ventral_genes) }
+        if (input$Landmark_genesAnterior){Entry<-append(Entry,Anterior_genes) }
+        if (input$Landmark_genesNP){ Entry<-append(Entry,NP_genes) }
+        if (input$Landmark_genesEpi){Entry<-append(Entry,Epidermis) }
+        if (input$Landmark_genesPos){Entry<-append(Entry,Posterior) }
         if (input$Use_prev2 == TRUE){
+          Entry<-append(Entry,reduce.gene.list_samples(c(input$genes_for_timeserie)))
+        }        
+        if (input$Use_prev3 == TRUE){
           short_gene <- findhugo(input$gene)
           short_gene2 <- findhugo(input$gene2)
           Entry<-append(Entry,c(short_gene,short_gene2))
         }
-        selected_gene<-unique(append(selected_gene,c(Entry,input$gene_list_for_expression, Entry,input$genes_for_timeserie)))
-        #selected_gene<- c(NC_genes,NP_genes,Epidermis,'mir')
-        Net<-make_Network(selected_gene, 1e-10)
+        #selected_gene<- unique(append(Entry,c(input$gene_list_for_expression,input$genes_for_timeserie) ))
+        selected_gene<- unique(append(Entry,c(input$gene_list_for_expression,reduce.gene.list_samples(c(input$genes_for_timeserie)))))
+        Net<-make_Network(selected_gene, input$p_value_treshold)
         return(Net)
       }
-    }
+    }  
   })
 
 })
@@ -322,49 +337,53 @@ shinyServer(function(input, output) {
 ########################## Functions for plotting ############################ 
 ############################################################################## 
 
+
+##### MAKE SURE TO READ ALL SAMPLESALL
+#### DO not filter and normalize again! ... or sould I?
+
+
+
+
+
+
+#Dotplot
 absolute2.plot <-function(gene_name_str, stage, genotype)
 {
-  subgroup <-(data$genotype==genotype)&(data$stage==stage)&(data$tissue!="NB")&(data$tissue!="NP")
-  samples <- filter.n.normalize1(data,subgroup)
-  gene_name<- extend.gene.list_samples(gene_name_str,samples)
-  data.meansONLY<-expr.mean.comp(samples)
+  subgroup  <-(data$genotype==genotype)&(data$stage==stage)
+  samples   <- filter.n.normalize1(data,subgroup)  #samples are in RPKM values
+  gene_name <- gene_name_str
+  data.meansONLY <- expr.mean.comp(samples)
   
+  cpm_enrichment_values <- obtain.CMP_and_enrichment.values(data.meansONLY, gene_name)
+  cpm_enrichment_values1<-cpm_enrichment_values[cpm_enrichment_values$Tissue != 'NB', ]
+  cpm_enrichment_values<-cpm_enrichment_values1[cpm_enrichment_values1$Tissue != 'NP', ]
   
-  e.matrix<-2**samples$voom$E[gene_name,]
-  e.thresh<-dim(e.matrix)[2]/2
-  filter<-apply(e.matrix,1,function(x) ((sum(x>e.thresh))>1))
-  gene_name<-gene_name[filter]
-  ngenes = length(gene_name)
+  #  qplot(x = log(RPKM,2), y = Tissue, data = cpm_enrichment_values, geom = "point", color=Ectodemal_enrichment, size=RPKM,  ylab = "Ectodermal tissue type", xlab=paste("Log2(Mean RPKM) - St.",stage,sep=" "),  main=toString(gene_name_str), xlim=c(min(log(cpm_enrichment_values$RPKM,2),0),max(log(cpm_enrichment_values$RPKM,2))*1.1)) + 
   
-  cpm_enrichment_values<- obtain.CMP_and_enrichment.values(data.meansONLY, gene_name)
-  
-  qplot(x = log(CPM,2), y = Tissue, data = cpm_enrichment_values, geom = "point", color=Specificity, size=log(CPM,2),  ylab = "Ectodermal tissue type", xlab=paste("Log2(Mean CPM) - St.",stage,sep=" "),  main=toString(gene_name_str), xlim=c(-0.5,NA)) + 
+  qplot(x = RPKM, y = Tissue, data = cpm_enrichment_values, geom = "point", color=Ectodemal_enrichment, size=100, show.legend = NA, ylab = "Ectodermal tissue type", xlab=paste("Mean RPKM - St.",stage,sep=" "),  main=toString(reduce.gene.list_samples(unique(cpm_enrichment_values$Gene))), xlim=c(min(cpm_enrichment_values$RPKM,0),max(cpm_enrichment_values$RPKM)*1.1)) + 
     coord_flip()+
     theme_bw() +
-    theme( plot.title=element_text(face="bold.italic", size =18, angle=0 ),
+    theme( plot.title=element_text(face="bold.italic", size =16, angle=0, hjust = 0.5 ),
            
-           axis.title.y=element_text(face="bold", size=18, angle=90 ),
-           axis.title.x=element_text(face="bold", size=18,angle=0), 
-           axis.text.x=element_text(size=15), 
-           axis.text.y=element_text(size=13), 
+           axis.title.y=element_text(face="bold", size=16, angle=90 , hjust = 0.5, vjust = 0.5),
+           axis.title.x=element_text(face="bold", size=16,angle=0, hjust = 0.5, vjust = 0.5), 
+           axis.text.x=element_text(size=12), 
+           axis.text.y=element_text(size=12), 
            
-           strip.text.x= element_text(angle = 0, size = 12, hjust = 0.5, vjust = 0.5, face="bold.italic"),
+           strip.text.x= element_text(angle = 0, size = 11, hjust = 0.5, vjust = 0.5, face="bold.italic"),
            strip.background = element_rect(colour = 'steelblue', fill = 'white', size = 0.2),
            
-           legend.title=element_text(size=16), 
+           legend.title=element_text(size=10), 
            legend.position="top", 
-           legend.text =element_text(size=15),
+           legend.text =element_text(size=10),
            legend.key = element_rect(colour = NA),
            legend.key.width = unit(1,"cm"),
-           legend.key.height = unit(.5,"cm"),
-           aspect.ratio = 1.1
+           legend.key.height = unit(.5,"cm")
+           ####10/03 ,       aspect.ratio = 1.1
     ) + 
-    geom_vline(xintercept = 2, color="black", linetype = "longdash") + 
-    geom_vline(xintercept = 1.5, color="red", linetype = "longdash") +
-    geom_vline(xintercept = 5, color="gray", linetype = "longdash") +
-    scale_color_gradient( low="yellow", high="darkgreen", space="Lab",guide = "colorbar")  + 
+    geom_vline(xintercept = 1, color="gray", linetype = "longdash") +
+    scale_color_gradient( low="darkorange", high="darkgreen", space="Lab", guide = "colorbar", limits = c(0, 100))  + 
     facet_wrap(~ Gene, ncol = 4) 
-  
 }
 
 
@@ -382,8 +401,7 @@ nmf.plot.gene<-function(gene.name,embryo.image,draw.order,nmf.ematrix,insitu.col
   #breakpoints from image
   draw.breaks<-c(draw.values[1],((draw.values[1:(draw.values.l-1)]+draw.values[2:draw.values.l])/2),draw.values[draw.values.l])
   #plot
-  image(embryo.image,col=c("black",draw.nmf.colors,"white"),axes=F,
-        asp=1,breaks=draw.breaks)
+  image(embryo.image,col=c("black",draw.nmf.colors,"white"),axes=F, asp=1,breaks=draw.breaks)
   title(main=paste(title.name," - ",gene.name),outer=F,cex.main=cex.name)
 }
 ### The end ###
@@ -394,48 +412,50 @@ time.series.plot<-function(gene_name_str,Nomalization_gene,Nomalization_gene_hug
   samples<-filter.n.normalize1(data,subgroup_time_serieA)
   e.matrix<-2**samples$voom$E
   
-  genes_to_plot<- extend.gene.list_samples(gene_name_str, samples)
-  
+#  genes_to_plot<- extend.gene.list_samples(gene_name_str, samples)
+  genes_to_plot<-gene_name_str    ### make sure it is present in the dataset ####TODO
+ ####HERE#### genes_to_plot <- gene_name_str
   
   if(Nomalization_gene != "no normalization"){
     norm_gene <- Nomalization_gene
-    test1<- t(data.frame(apply(e.matrix[genes_to_plot,],1,function(x) ((x/e.matrix[norm_gene,])))))
+    #test1<- t(data.frame(apply(e.matrix[genes_to_plot,],1,function(x) ((x/e.matrix[norm_gene,])))))
+    test1<- t(data.frame(apply(e.matrix[which(match(rownames(e.matrix),genes_to_plot)!= "NA"),],1,function(x) ((x/e.matrix[norm_gene,])))))
+    
   }else{
-    test1<- data.frame(e.matrix[genes_to_plot,])
+    ##test1<- data.frame(e.matrix[genes_to_plot,])
+    test1<- data.frame(e.matrix[which(match(rownames(e.matrix),genes_to_plot)!= "NA"),])
   }
-  
   
   colnames(test1)<-samples$stage
   test<- melt(t(as.matrix(test1)))
   test1<-test
   colnames(test1)<-c("Stage","Gene","value")
   test1$Stage <- factor(test1$Stage,levels=c("11-11.5","12","12.5","13","14-15","16-17","18-19"))
-  #  test1$Stage <- factor(test1$Stage,levels=c("11-11.5","12","12.5","13","14","14-15","16-17","18-19"))
-  
+
   if(Nomalization_gene != "no normalization"){
-    qplot(Stage, value, fill=factor(Gene), data=test1, geom=c("point"), color=Gene, xlab = "NF Stage", ylab = paste("Expression relative to",Nomalization_gene_hugo),  main=toString(gene_name_str), show.legend=FALSE) +  
+    qplot(Stage, value, fill=factor(Gene), data=test1, geom=c("point"),  color=Gene, xlab = "NF Stage", ylab = paste("Expression relative to",Nomalization_gene_hugo),  main=toString(reduce.gene.list_samples(test1$Gene)), show.legend=FALSE) +  
       stat_summary(fun.y=mean, geom="path", aes(color=Gene, group=Gene),  alpha= 1) +
       theme_bw() +
-      theme( plot.title=element_text(face="bold.italic", size=20, angle=0 ),
-             axis.title.y=element_text(face="bold", size=20, angle=90 ),
-             axis.title.x=element_text(size=20,angle=0), 
-             axis.text.x=element_text(size=16), 
-             axis.text.y=element_text(size=16), 
+      theme( plot.title=element_text(face="bold.italic", size=16, angle=0 ,  hjust = 0.5 ),
+             axis.title.y=element_text(face="bold", size=16, angle=90 ),
+             axis.title.x=element_text(size=16,angle=0), 
+             axis.text.x=element_text(size=14), 
+             axis.text.y=element_text(size=14), 
              legend.title=element_blank(), 
              legend.position="top",
              legend.text =element_text(face="italic", size=12),
              legend.key = element_rect(colour = NA) 
       )
   }else{
-    qplot(Stage, value, fill=factor(Gene), data=test1, geom=c("point"), color=Gene, xlab = "NF Stage", ylab = "Counts Per Million Mapped Reads",  main=toString(gene_name_str), show.legend=FALSE) +  
-      geom_hline(yintercept = 5, color = "red", linetype = "longdash") +
+    qplot(Stage, value, fill=factor(Gene), data=test1, geom=c("point"),  color=Gene, xlab = "NF Stage", ylab = "RPKM",   main=toString(reduce.gene.list_samples(test1$Gene)), show.legend=FALSE) +  
+      geom_hline(yintercept = 1, color = "gray", linetype = "longdash") +
       stat_summary(fun.y=mean, geom="path", aes(color=Gene, group=Gene),  alpha= 1) +
       theme_bw() +
-      theme( plot.title=element_text(face="bold.italic", size=20, angle=0 ),
-             axis.title.y=element_text(face="bold", size=20, angle=90 ),
-             axis.title.x=element_text(size=20,angle=0), 
-             axis.text.x=element_text(size=16), 
-             axis.text.y=element_text(size=16), 
+      theme( plot.title=element_text(face="bold.italic", size=16, angle=0,  hjust = 0.5  ),
+             axis.title.y=element_text(face="bold", size=16, angle=90 ),
+             axis.title.x=element_text(size=16,angle=0), 
+             axis.text.x=element_text(size=14), 
+             axis.text.y=element_text(size=14), 
              legend.title=element_blank(), 
              legend.position="top",
              legend.text =element_text(face="italic", size=12),
@@ -448,21 +468,14 @@ time.series.plot<-function(gene_name_str,Nomalization_gene,Nomalization_gene_hug
 heat.plot<-function(gene_name_str, corr_type){
   subgroup_time_serie <-(data$genotype=='WT')
   samplesALL<-filter.n.normalize1(data,subgroup_time_serie)
-  gene_name<- extend.gene.list_samples(gene_name_str,samplesALL)
-  
-  
+  gene_name<-extend.gene.list_samples_from_hugo(sort(unique(gene_name_str)))
   e.matrix<-2**samplesALL$voom$E[gene_name,]
-  e.thresh<-dim(e.matrix)[2]/2
-  filter<-apply(e.matrix,1,function(x) ((sum(x>e.thresh))>1))
-  gene_name<-filter
-    
   gene.expression.matrix<-t(e.matrix[gene_name,])
   pvalue <- melt(rcorr(t(e.matrix[gene_name,]), type=corr_type)$P)
   correlation_data.m <- melt(rcorr(t(e.matrix[gene_name,]), type=corr_type)$r)
   
   correlation_data.m$pvalue<-pvalue$value
-  
-  correlation_data.m$stars[pvalue$value>=.1] <- NA
+  correlation_data.m$stars[pvalue$value>=.1] <- ' '
   correlation_data.m$stars[pvalue$value<.1 & correlation_data.m$pvalue>.01] <- '.'
   correlation_data.m$stars[pvalue$value<.01 & correlation_data.m$pvalue>.001] <- '*'
   correlation_data.m$stars[pvalue$value<.001 & correlation_data.m$pvalue>.0001] <- '* *'
@@ -476,7 +489,7 @@ heat.plot<-function(gene_name_str, corr_type){
                          midpoint = 0, limit = c(-1,1), space = "gene.expression.matrix", 
                          name=paste(corr_type,'correlation', sep="\n")) +
     theme(  axis.text.y=element_text(size=14, face="italic"), 
-            axis.text.x=element_text(size=12, face="italic", angle=45, hjust=1,vjust = 1),
+            axis.text.x=element_text(size=10, face="italic", angle=30, hjust=1,vjust = 1),
             axis.title.x = element_blank(),
             axis.title.y = element_blank(),
             panel.grid.major = element_blank(),
@@ -484,33 +497,26 @@ heat.plot<-function(gene_name_str, corr_type){
             panel.background = element_blank()) +
     geom_text(aes(Var1,Var2, label = stars), color = 'black', size=3) + 
     coord_equal(ratio = 1.3)
-  
-  
+
 }
 
-tree_plot<-function(gene_name_str, corr_type='spearman'){
+tree_plot<-function(gene_name_str, corr_type){
   subgroup_time_serie <-(data$genotype=='WT')
   samplesALL<-filter.n.normalize1(data,subgroup_time_serie)
-  gene_name<- extend.gene.list_samples(gene_name_str,samplesALL)
-  
-  #gene_name<- extend.gene.list(gene_name_str)
-  
-  #mydata<-samplesALL$voom$E[gene_name,]
+  gene_name<-extend.gene.list_samples_from_hugo(sort(unique(gene_name_str)))
   mydata<-2**samplesALL$voom$E[gene_name,]
   e.thresh<-dim(mydata)[2]/2
   filter<-apply(mydata,1,function(x) ((sum(x>e.thresh))>1))
-
-  #mydata <- scale(mydata)
+  
   S.correl <-rcorr(t(mydata[filter,]), type=corr_type)$r
   hc<-hclust(dist(S.correl), "mcquitty")
   
-  
-  num_colors<-round(length(gene_name_str)/2 + .5)
-  if (length(num_colors>10)){
-    num_colors<-10
+  num_colors<-round(length(rownames(mydata[filter,]))/2 + .5)
+  if (num_colors>11){
+    num_colors<-11
   }
 
-  labelColors =c("mediumorchid4","red","limegreen","royalblue4","hotpink3","darkseagreen4","blue","darkslategray4","darkorange", "seagreen","darkpurple","brown1")
+  labelColors =c("mediumorchid4","red","limegreen","royalblue4","hotpink3","darkseagreen4","blue","darkslategray4","darkorange", "seagreen","darkgreen","darkblue")
   
   hcd = as.dendrogram(hc, horiz=T)
   clusMember = cutree(hc, num_colors)
@@ -540,8 +546,8 @@ tree_plot<-function(gene_name_str, corr_type='spearman'){
 
 ###USEFUL FUNCTIONS
 findgn<-function(name,edata){ grep(name,rownames(edata$rawcounts),value=T) }
-
 findhugo<-function(long_name){ data$annotations$hugo.name [data$annotations$name.and.blast.annotation==long_name]}
+find_blast_annot <- function(long_name) { data$annotations['name.and.blast.annotation'][data$annotations['hugo.name']==long_name]}
 
 
 ############ Required functions ############ 
@@ -614,6 +620,19 @@ extend.gene.list<-function(gene_list){
   return(list_of_geness)
 }
 
+reduce.gene.list_samples<-function(gene_list){
+  list_of_geness<-c()
+  for (gene in gene_list){
+    if (length(list_of_geness) == 0) {
+      list_of_geness <- findhugo(gene)
+    }else{
+      list_of_geness<-append(list_of_geness,findhugo(gene))
+    }
+  }
+  return(sort(unique(list_of_geness)))
+}
+
+
 extend.gene.list_samples<-function(gene_list,samples){
   list_of_geness<-c()
   for (gene in gene_list){
@@ -626,11 +645,23 @@ extend.gene.list_samples<-function(gene_list,samples){
   return(list_of_geness)
 }
 
+
+extend.gene.list_samples_from_hugo<-function(gene_list){
+  list_of_geness<-c()
+  for (gene in gene_list){
+    if (length(list_of_geness) == 0) {
+      list_of_geness <- find_blast_annot(gene)
+    }else{
+      list_of_geness<-append(list_of_geness,find_blast_annot(gene))
+    }
+  }
+  return(unique(c(list_of_geness)))
+}
+
+
 #Computes average of expression in each sample type (linear, not log2) so we can draw a pattern
 expr.mean.comp<-function(edata){
   e.matrix<-2**edata$voom$E
-  
-  
   e.tissues<-sort(unique(edata$tissue))
   e.mean<-c()
   for (t in e.tissues)
@@ -645,15 +676,18 @@ expr.mean.comp<-function(edata){
   return(e.result)
 }
 
-#### What I need to make it more efficient is to avoid selecting the sample twice.
 
 obtain.CMP_and_enrichment.values<-function(data.meansONLY, gene_name){
-  num_tissues<-dim(data.meansONLY)[2]-1
+  num_tissues <- dim(data.meansONLY)[2]-1  #obtain the number of tissues minus 1
+  gene_name_1<-rownames(data.meansONLY)[match(gene_name,rownames(data.meansONLY))]
   
-  specificity_in_ectoderm<-data.meansONLY[rownames(data.meansONLY),]/data.meansONLY[rownames(data.meansONLY),][,'WE']
+#  gene_name_1<-rownames(data.meansONLY)[match(extend.gene.list_samples_from_hugo(gene_name),rownames(data.meansONLY))]
+  gene_name_1<-gene_name_1[is.na(gene_name_1)==FALSE]
+  ###gene_name_1<-
   
-  specificity_matrix1<-NULL
-  specificity_matrix1<- data.frame(index=rownames(specificity_in_ectoderm)) #NULL#data.frame(colnames=colnames(a))
+  specificity_in_ectoderm <- data.meansONLY[rownames(data.meansONLY),]/data.meansONLY[rownames(data.meansONLY),][,'WE']
+  specificity_matrix1 <- NULL
+  specificity_matrix1 <- data.frame(index=rownames(specificity_in_ectoderm)) #NULL#data.frame(colnames=colnames(a))
   for (tissue in colnames(specificity_in_ectoderm)){   #for each different tissue
     specificity_matrix1[tissue]<-rank(specificity_in_ectoderm[,tissue])
   }
@@ -661,32 +695,30 @@ obtain.CMP_and_enrichment.values<-function(data.meansONLY, gene_name){
   specificity_matrix1$index <-NULL
   
   # specificity_tissueRANK: Will provide the ratio between the percentile
-  specificity_tissueRANK <- specificity_matrix1[gene_name,colnames(specificity_in_ectoderm)]/dim(specificity_matrix1)[1]*100
-  #specificity_tissueRANK <- specificity_matrix1[gene_name,colnames(specificity_in_ectoderm)]/26108
+  specificity_tissueRANK <- specificity_matrix1[gene_name_1,colnames(specificity_in_ectoderm)]/dim(specificity_matrix1)[1]*100
   
   to_include<-NULL
   integreated_data_to_plot<-NULL
   
-  to_include<- melt(t(as.matrix(specificity_tissueRANK[gene_name,1:num_tissues])))   #1:9 prevents WE output
+  to_include<- melt(t(as.matrix(specificity_tissueRANK[gene_name_1,1:num_tissues])))   #1:9 prevents WE output
   colnames(to_include)<-c("Stage","Gene","Specificity")
   
-  CPM_means <-data.meansONLY[gene_name,1:num_tissues] #1:9 prevents WE output
+  CPM_means <-data.meansONLY[gene_name_1,1:num_tissues] #1:9 prevents WE output
   integreated_data_to_plot<-melt(t(CPM_means))
-  colnames(integreated_data_to_plot)<-c("Tissue","Gene","CPM")
-  integreated_data_to_plot['Specificity']<-to_include$Specificity
+  colnames(integreated_data_to_plot)<-c("Tissue","Gene","RPKM")
+  integreated_data_to_plot['Ectodemal_enrichment']<-to_include$Specificity
   integreated_data_to_plot
   
   return(integreated_data_to_plot)
-  
 }
+
 
 #Widely used function that selects genes with expression values above a treshold of 2^1=2cpm.
 filter.n.normalize1<-function(edata,samples,e.thresh=1){
   #crop expression matrix and filter genes with counts under e.thresh in all but 2 samples
   filter<-apply(edata$rawcounts[,samples],1,function(x) ((sum(x>e.thresh))>1))
-  rawcounts.n<-edata$rawcounts[filter,samples]
-  #  cat("original number of genes:",length(filter)," filtered:",sum(filter),"\n",sep="")
-  
+  rawcounts.n<-edata$rawcounts[filter,samples] /edata$annotations$gene.length[filter] *1000
+
   #normalize with edgeR/TMM+voom
   vdge<-NULL
   dge<-DGEList(counts=rawcounts.n)
@@ -703,8 +735,8 @@ filter.n.normalize1<-function(edata,samples,e.thresh=1){
               edger=dge,voom=vdge))
 }
 
+
 obtain_adjacent_and_cor_values<- function(gene_name){
-  corr_type<-'pearson'
   tmpA<-Adj.genes[1,]==gene_name
   genes_list<- Adj.genes[,tmpA]
   values_list<- Adj.values[,tmpA]
@@ -714,69 +746,74 @@ obtain_adjacent_and_cor_values<- function(gene_name){
   gene_names<- rownames(new_df)
   
   subgroup_time_serie <-(data$genotype=='WT')
-  samplesALL<-filter.n.normalize1(data,subgroup_time_serie)
+  samplesALL<-filter.n.normalize1(data,subgroup_time_serie)  
   e.matrix<-2**samplesALL$voom$E[gene_names,]
   
-  new_df[['Pearson']]<-rcorr(t(e.matrix[gene_names,]), type=corr_type)$r[,gene_name]
-  new_df[['p-val Pear']]<-rcorr(t(e.matrix[gene_names,]), type=corr_type)$P[,gene_name]
-  new_df[['Spearman']]<-rcorr(t(e.matrix[gene_names,]), type='spearman')$r[,gene_name]
-  new_df[['p-val Spear']]<-rcorr(t(e.matrix[gene_names,]), type='spearman')$P[,gene_name]
-  
+  new_df[['Pearson']]<-rcorr(t(e.matrix[gene_names,]), type='pearson')$r[,gene_name]
+  new_df[['p-val Pear']]<-rcorr(t(e.matrix[gene_names,]), type='pearson')$P[,gene_name]
+  new_df<-cbind(new_df, WGCNAgene_module[match(gene_names,WGCNAgene_module$Gene),][2]) 
   return(new_df)
+  
 }
 
 
-
-
 make_Network <- function (selected_gene,p_value_treshold){
+  cat("Retrieving expression data for each input gene")
   subgroup_time_serie <-(data$genotype=='WT')
   samplesALL<-filter.n.normalize1(data,subgroup_time_serie)
   mydata<-2**samplesALL$voom$E
-  e.thresh<-dim(mydata)[2]/2
-  filter<-apply(mydata,1,function(x) ((sum(x>e.thresh))>1))
-  DATA1<-log2(t(mydata[filter,]))
+  
+  #Select genes with cpm that are expressed above two tresholds (the sum of all conditions > 40cpm or the max of cpm counts is at least 50)
+  e.thresh<-round(dim(mydata)[2]/2)
+  filter2<-apply(mydata,1,function(x) ( ((max(x)>50)  | (sum(x>e.thresh))>1)))   #dim: 79x10822   new table! (if >50cpr then 79x10073)
+  DATA1<- log(t(mydata[filter2,]))   
+  dim(DATA1)
   colDATA1<-colnames(DATA1)
+
+  genes_you_want<-WGCNAgene_module$Gene[match(extend.gene.list_samples_from_hugo(selected_gene),WGCNAgene_module$Gene)]
+  genes_you_want<-genes_you_want[is.na(genes_you_want)==FALSE]
   
-  genes_you_want_all<-extend.gene.list_samples(c(selected_gene),samplesALL)
-  mydata1<-mydata[c(genes_you_want_all),]
-  e.thresh<-dim(mydata1)[2]/2
-  filter<-apply(mydata1,1,function(x) ((sum(x>e.thresh))>1))
-  genes_you_want<- genes_you_want_all[filter]
-  
-  
+  cat("Drawing network\n\n")
   if (length(genes_you_want)>1){
-    
     long_list <- obtain_long_list(c(genes_you_want), p_value_treshold, mydata, colDATA1)
     MisLinks<-make_link_matrix(unique(long_list))
     MisNodes<-make_node_matrix(unique(long_list), colDATA1)
     MyClickScript <- 'd3.select(this).select("circle").transition()
-                       .duration(100000)
-                       .attr("r", 20);
-                       .style("color","black")
-                      d3.select(this).select("text").transition()
-                       .duration(100000)
-                       .attr("x", 20)
-                       .style("stroke-width", "30px")
-                       .style("font", "italic 120px arial")
-                       .style("color","black")
-                       .style("opacity", 1)' 
+    .duration(200000)
+    .attr("r", 20);
+    .style("color","black")
+    d3.select(this).select("text").transition()
+    .duration(100000)
+    .attr("x", 20)
+    .style("stroke-width", "30px")
+    .style("font", "italic 160px arial")
+    .style("color","black")
+    .style("opacity", 1)' 
+    
+    cat("Obtained Links and Node inforamtion. Ready to plot!\n")
+    cat(paste("  Links:",dim(MisLinks)[1],"\n"))
+    cat(paste("  Nodes:",dim(MisNodes)[1],"\n"))
+    
+    LinkColors<-MisLinks
+    LinkColors[LinkColors$value<=0,"colors"]<-"red"
+    LinkColors[LinkColors$value>0,"colors"]<-"gray"
     
     return(forceNetwork(Links = MisLinks, Nodes = MisNodes, Source = "source",
-                 Target = "target", Value = "value", NodeID = "name",
-                 Group = "group", 
-                 opacity = 0.9,
-                 colourScale = "d3.scale.category20()",#       legend=TRUE, 
-                 Nodesize = "size",  
-                 fontFamily="arial", 
-                 fontSize =24,                  #     linkColour= "gray", 
-                 linkDistance= JS("function(d){return d.value + 5}"),
-                 linkWidth = JS('function(l){return l.value < 0 ? "2.5" : ".5" }'),
-                 charge =-120, 
-                 bounded=F, 
-                 opacityNoHover = 0, 
-                 zoom = T,   #   linkColour = JS('function(l) { return l.value > 0 ? "red" : "green" }'), #http://stackoverflow.com/questions/34480814/specifying-colors-for-each-link-in-a-force-directed-network-in-networkd3forcen  ###ERROR: cannot coerce class ""JS_EVAL"" to a data.frame
-                 clickAction = MyClickScript,
-                 radiusCalculation = JS("Math.sqrt(d.nodesize*5)"))
+                        Target = "target", Value = "value", NodeID = "name",
+                        Group = "group", 
+                        opacity = 0.9,
+                        Nodesize = "size",  
+                        fontFamily="arial", 
+                        fontSize =24,         
+                        #  linkDistance= JS("function(d){return d.value + 5}"),
+                        linkWidth  = JS('function(l){return l.value < 0 ? "2" : ".5" }'),
+                        charge =-50, 
+                        linkColour = LinkColors$colors,
+                        bounded=F, 
+                        opacityNoHover = 0, 
+                        zoom = T,  
+                        clickAction = MyClickScript,
+                        radiusCalculation = JS("Math.sqrt(d.nodesize*15)"))
     )
   }
 }
@@ -796,6 +833,7 @@ obtain_long_list <- function(genes_you_want,p_value_treshold, mydata, colDATA1){
   return(full_list)
 }
 
+
 obtain_adjacent_values2<- function(gene_name2,pvalue_treshold, mydata, colDATA1){
   corr_type<-'pearson'
   tmpB<-Adj.genes[1,]==gene_name2
@@ -809,7 +847,7 @@ obtain_adjacent_values2<- function(gene_name2,pvalue_treshold, mydata, colDATA1)
   e.matrix<-mydata[genes_list,]
   new_df$Pearson<-rcorr(t(e.matrix[genes_list,]), type=corr_type)$r[,gene_name2]
   new_df$p_val<-rcorr(t(e.matrix[genes_list,]), type=corr_type)$P[,gene_name2]
-  new_df$color<-WGCNAclusters$colors[match(new_df$source,colDATA1)]
+  new_df$color<-WGCNAgene_module$Module[match(genes_list,WGCNAgene_module$Gene)]
   new_df$p_val[is.na(new_df$p_val)] <- 0
   new_df$size[new_df$source==gene_name2] <- 10
   new_df$size[new_df$source!=gene_name2] <- 3
@@ -833,8 +871,7 @@ make_link_matrix<-function(long_list){
 make_node_matrix<-function(long_list, colDATA1){
   new_long_list2<-data.frame(row.names = c(1:dim(unique(long_list[1]))[1]))
   new_long_list2$name<-as.matrix(unique(long_list[1]))
-  new_long_list2$group<-WGCNAclusters$colors[match(c(new_long_list2$name),colDATA1)]
-  new_long_list2$group<- match(c(new_long_list2$group),unique(new_long_list2$group))
+  new_long_list2$group<-WGCNAgene_module$Module[match(new_long_list2$name,WGCNAgene_module$Gene)]
   new_long_list2$size[1:length(new_long_list2$name)]<-5
   new_long_list2$size[which(match(new_long_list2$name, long_list$target)>0)]<-20
   colnames(new_long_list2)<-c('name','group','size')
